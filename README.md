@@ -20,3 +20,20 @@ Aplikasi web sederhana untuk manajemen inventori barang menggunakan **Python Fla
    ```bash
    git clone [https://github.com/username-kamu/db-inventory-flask.git](https://github.com/username-kamu/db-inventory-flask.git)
    cd db-inventory-flask
+
+2. Buat Virtual Environment
+   python -m venv venv
+   source venv/bin/activate  # Untuk Linux/macOS
+   # atau
+   venv\Scripts\activate     # Untuk Windows
+
+3. Install Dependencies
+   pip install -r requirements.txt
+
+4. Konfigurasi Database
+   Pastikan XAMPP/Laragon MySQL aktif
+   Buat database baru bernama db_inventory
+   Sesuaikan konfigurasi di file config.py jika username/password database kamu berbeda.
+
+5. Jalankan Aplikasi
+   python app.py
