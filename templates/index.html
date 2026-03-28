@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Inventory</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .img-product {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 5px;
+        }
+        .filter-section {
+            max-width: 600px;
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <div class="container mt-5">
+        <h2 class="text-center mb-4">📦 Daftar Inventori Barang</h2>
+
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+            <div class="d-flex gap-2">
+                <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#tambahModal">+ Tambah Barang</button>
+                <button class="btn btn-outline-secondary shadow-sm" data-bs-toggle="modal" data-bs-target="#kategoriModal">+ Kategori</button>
+            </div>
+            
+            <form action="/" method="GET" class="filter-section flex-grow-1">
+                <div class="input-group shadow-sm">
+                    <select name="kat" class="form-select" style="max-width: 150px;">
+                        <option value="">Semua Kategori</option>
+                        {% for k in kategori %}
+                        <option value="{{ k.id }}" {{ 'selected' if request.args.get('kat')|string == k.id|string }}>
+                            {{ k.nama }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    
+                    <input type="text" name="search" class="form-control" placeholder="Cari barang..." value="{{ request.args.get('search', '') }}">
+                    
+                    <button class="btn btn-dark" type="submit">Filter</button>
+                    
+                    {% if request.args.get('search') or request.args.get('kat') %}
+                        <a href="/" class="btn btn-outline-danger">Reset</a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+
+        <div class="card shadow border-0">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover align-middle mb-0">
+                        <thead class="table-dark">
+                            <tr>
+                                <th class="ps-3">ID</th>
+                                <th>Gambar</th>
+                                <th>Nama Barang</th>
+                                <th>Kategori</th>
+                                <th>Harga</th> 
+                                <th>Stok</th>
+                                <th class="text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for b in barang %}
+                            <tr>
+                                <td class="ps-3">{{ b.id }}</td>
+                                <td>
+                                    {% if b.gambar %}
+                                        <img src="{{ url_for('static', filename='uploads/' + b.gambar) }}" class="img-product shadow-sm">
+                                    {% else %}
+                                        <span class="badge bg-secondary">No Image</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ b.nama }}</td>
+                                <td>
+                                    <span class="badge bg-info text-dark">
+                                        {{ b.kategori_info.nama if b.kategori_id else 'Tanpa Kategori' }}
+                                    </span>
+                                </td>
+                                <td class="fw-bold text-success">Rp {{ "{:,.0f}".format(b.harga or 0).replace(',', '.') }}</td>
+                                <td>
+                                    <span class="badge {{ 'bg-danger' if b.stok == 0 else 'bg-dark' }}">
+                                        {{ b.stok }}
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    <div class="btn-group">
+                                        <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editModal{{ b.id }}">Edit</button>
+                                        <a href="/delete/{{ b.id }}" class="btn btn-danger btn-sm" onclick="return confirm('Hapus barang ini?')">Hapus</a>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <div class="modal fade" id="editModal{{ b.id }}" tabindex="-1">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">Edit Barang: {{ b.nama }}</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <form action="/edit/{{ b.id }}" method="POST" enctype="multipart/form-data">
+                                            <div class="modal-body">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Nama Barang</label>
+                                                    <input type="text" name="nama" class="form-control" value="{{ b.nama }}" required>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label">Kategori</label>
+                                                    <select name="kategori_id" class="form-select">
+                                                        <option value="">-- Pilih Kategori --</option>
+                                                        {% for k in kategori %}
+                                                        <option value="{{ k.id }}" {{ 'selected' if k.id == b.kategori_id }}>{{ k.nama }}</option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-md-8 mb-3">
+                                                        <label class="form-label">Harga Satuan (Rp)</label>
+                                                        <input type="text" class="form-control" 
+                                                               value="{{ '{:,.0f}'.format(b.harga or 0).replace(',', '.') }}"
+                                                               onkeyup="formatRupiahEdit(this, 'harga_asli_{{ b.id }}')" required>
+                                                        <input type="hidden" name="harga" id="harga_asli_{{ b.id }}" value="{{ b.harga }}">
+                                                    </div>
+                                                    <div class="col-md-4 mb-3">
+                                                        <label class="form-label">Stok</label>
+                                                        <input type="number" name="stok" class="form-control" min="0" value="{{ b.stok }}" required>
+                                                    </div>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label">Ganti Foto</label>
+                                                    <input type="file" name="gambar" class="form-control" accept="image/*">
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="submit" class="btn btn-primary w-100">Update Produk</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                            
+                            {% if not barang %}
+                            <tr>
+                                <td colspan="7" class="text-center text-muted py-5">
+                                    <p class="mb-0">Data tidak ditemukan untuk kriteria tersebut.</p>
+                                </td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="tambahModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Tambah Barang Baru</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form action="/add" method="POST" enctype="multipart/form-data" autocomplete="off">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Nama Barang</label>
+                            <input type="text" name="nama" class="form-control" placeholder="Nama barang..." required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Kategori</label>
+                            <select name="kategori_id" class="form-select">
+                                <option value="">-- Pilih Kategori --</option>
+                                {% for k in kategori %}
+                                <option value="{{ k.id }}">{{ k.nama }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-8 mb-3">
+                                <label class="form-label">Harga Satuan (Rp)</label>
+                                <input type="text" class="form-control" placeholder="0" onkeyup="formatRupiahEdit(this, 'harga_asli_tambah')" required>
+                                <input type="hidden" name="harga" id="harga_asli_tambah">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Stok</label>
+                                <input type="number" name="stok" class="form-control" min="0" value="0" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Foto Produk</label>
+                            <input type="file" name="gambar" class="form-control" accept="image/*">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-success w-100">Simpan Produk</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="kategoriModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Kategori Baru</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form action="/add_kategori" method="POST">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Nama Kategori</label>
+                            <input type="text" name="nama_kategori" class="form-control" placeholder="Contoh: Elektronik" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary w-100">Tambah</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function formatRupiahEdit(element, targetId) {
+            let value = element.value.replace(/[^0-9]/g, "");
+            let formatted = new Intl.NumberFormat('id-ID').format(value);
+            if (value === "") {
+                element.value = "";
+                document.getElementById(targetId).value = "";
+            } else {
+                element.value = formatted;
+                document.getElementById(targetId).value = value;
+            }
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
