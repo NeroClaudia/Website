@@ -14,26 +14,22 @@ Aplikasi web sederhana untuk manajemen inventori barang menggunakan **Python Fla
 * **Database:** MySQL (SQLAlchemy ORM)
 * **Frontend:** HTML5, Bootstrap 5, Jinja2 (Templating)
 
-## 📋 Cara Instalasi
+## 📋 Langkah Instalasi
 
-1. **Clone Repository**
-   ```bash
-   git clone [https://github.com/username-kamu/db-inventory-flask.git](https://github.com/username-kamu/db-inventory-flask.git)
-   cd db-inventory-flask
+### 1. Persiapan Database (MySQL)
+Sebelum menjalankan aplikasi, kamu perlu menyiapkan database di XAMPP/MySQL lokal:
+* Buka **phpMyAdmin** (`localhost/phpmyadmin`).
+* Buat database baru dengan nama `db_inventory`.
+* Kamu tidak perlu membuat tabel secara manual, Flask-SQLAlchemy akan membuatnya otomatis saat pertama kali dijalankan lewat `db.create_all()`.
 
-2. Buat Virtual Environment
-   python -m venv venv
-   source venv/bin/activate  # Untuk Linux/macOS
-   # atau
-   venv\Scripts\activate     # Untuk Windows
+### 2. Pengaturan Virtual Environment (Venv)
+Virtual environment digunakan agar library proyek ini tidak bentrok dengan library lain di komputermu:
+```bash
+# Membuat venv
+python -m venv venv
 
-3. Install Dependencies
-   pip install -r requirements.txt
+# Mengaktifkan venv (Windows)
+venv\Scripts\activate
 
-4. Konfigurasi Database
-   Pastikan XAMPP/Laragon MySQL aktif
-   Buat database baru bernama db_inventory
-   Sesuaikan konfigurasi di file config.py jika username/password database kamu berbeda.
-
-5. Jalankan Aplikasi
-   python app.py
+# Mengaktifkan venv (Linux/macOS)
+source venv/bin/activate
